@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B5L1 Dialogue Cloze</title>
+  <style>
+    :root {
+      --primary: #4a90e2;
+      --primary-dark: #357abd;
+      --success: #2ecc71;
+      --danger: #e74c3c;
+      --bg: #f4f6f9;
+      --card-bg: #ffffff;
+      --selected-bg: #ffe082;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      margin: 0;
+      padding: 20px 10px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .quiz-container {
+      background: var(--card-bg);
+      max-width: 850px;
+      width: 100%;
+      padding: 25px 30px;
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 1.6rem;
+    }
+
+    /* 學生資訊與計時列 */
+    .header-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      background-color: #eef3f8;
+      padding: 16px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-group label {
+      font-size: 0.85rem;
+      color: #555;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .input-group input {
+      padding: 7px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .timer-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #e1f5fe;
+      border: 1px solid #b3e5fc;
+      border-radius: 8px;
+    }
+
+    .timer-card .label {
+      font-size: 0.8rem;
+      color: #0288d1;
+      font-weight: bold;
+    }
+
+    .timer-card .time {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #01579b;
+    }
+
+    /* 單字庫 */
+    .word-bank-section {
+      background: #f8f9fa;
+      border: 2px dashed var(--primary);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 25px;
+      position: sticky;
+      top: 10px;
+      z-index: 100;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    .word-bank-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .word-bank-title {
+      font-weight: bold;
+      color: var(--primary);
+      font-size: 1rem;
+    }
+
+    .word-bank-hint {
+      font-size: 0.82rem;
+      color: #777;
+    }
+
+    .word-bank {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 45px;
+      align-items: center;
+    }
+
+    .word-card {
+      background-color: var(--primary);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 18px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.95rem;
+      user-select: none;
+      transition: all 0.15s ease;
+      display: inline-block;
+    }
+
+    .word-card:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    .word-card.selected {
+      background-color: var(--selected-bg);
+      color: #333;
+      box-shadow: 0 0 0 3px #f39c12;
+    }
+
+    /* 文章對話區 */
+    .dialogue-section {
+      line-height: 2.3;
+      font-size: 1.05rem;
+      color: #2c3e50;
+      margin-bottom: 25px;
+    }
+
+    .line-item {
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed #eee;
+    }
+
+    .speaker {
+      font-weight: bold;
+      color: #2980b9;
+      margin-right: 6px;
+    }
+
+    .zh-text {
+      font-size: 0.88rem;
+      color: #7f8c8d;
+      margin-top: 2px;
+      display: block;
+    }
+
+    .drop-zone {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 90px;
+      height: 32px;
+      border-bottom: 2px solid #7f8c8d;
+      background-color: #fafafa;
+      vertical-align: middle;
+      margin: 0 4px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .drop-zone.hovered {
+      background-color: #e3f2fd;
+      border-color: var(--primary);
+    }
+
+    .drop-zone.correct {
+      border: 2px solid var(--success);
+      background-color: #e8f8f5;
+    }
+
+    .drop-zone.incorrect {
+      border: 2px solid var(--danger);
+      background-color: #fdeae8;
+    }
+
+    .drop-zone .word-card {
+      margin: 0;
+      box-shadow: none;
+    }
+
+    /* 操作區按鈕 */
+    .action-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      text-align: center;
+    }
+
+    .btn-submit {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-submit:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-toggle-zh {
+      background-color: #78909c;
+      color: white;
+      max-width: 200px;
+    }
+
+    .btn-toggle-zh:hover {
+      background-color: #607d8b;
+    }
+
+    .btn:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+    }
+
+    #statusMessage {
+      margin-top: 18px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.15rem;
+    }
+
+/* 錯題提示標籤樣式 */
+.correct-hint {
+  color: #c0392b;
+  background-color: #fadbd8;
+  border: 1px solid #f5b7b1;
+  font-size: 0.85rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 4px;
+  margin-right: 6px;
+  display: inline-block;
+  line-height: 1.2;
+}
+  </style>
+</head>
+<body>
+
+<div class="quiz-container">
+  <h1>B5L1 Dialogue Cloze 拖拉填空測驗</h1>
+
+  <!-- 學生個人資料與計時器 -->
+  <div class="header-bar">
+    <div class="input-group">
+      <label for="className">班級：</label>
+      <input type="text" id="className" placeholder="例如：901">
+    </div>
+    <div class="input-group">
+      <label for="seatNumber">座號：</label>
+      <input type="number" id="seatNumber" placeholder="例如：12">
+    </div>
+    <div class="input-group">
+      <label for="studentName">姓名：</label>
+      <input type="text" id="studentName" placeholder="例如：王小明">
+    </div>
+    <div class="timer-card">
+      <span class="label">作答時間</span>
+      <span class="time" id="timer">00:00</span>
+    </div>
+  </div>
+
+  <!-- 浮動單字庫 -->
+  <div class="word-bank-section">
+    <div class="word-bank-header">
+      <span class="word-bank-title">Word Bank（共有 20 個單字）</span>
+      <span class="word-bank-hint">💡 提示：可直接拖拉，或點擊單字再點擊空格放置</span>
+    </div>
+    <div class="word-bank" id="wordBank"></div>
+  </div>
+
+  <!-- 對話文章內容 -->
+  <div class="dialogue-section" id="dialogueContent"></div>
+
+  <!-- 操作按鈕 -->
+  <div class="action-bar">
+    <button class="btn btn-toggle-zh" onclick="toggleTranslation()">顯示 / 隱藏中文對照</button>
+    <button class="btn btn-submit" id="submitBtn" onclick="submitQuiz()">FINISH</button>
+  </div>
+
+  <div id="statusMessage"></div>
+</div>
+
+<script>
+  // ⚠️ 請在此處貼上您的 Google Apps Script Web App URL
+  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby_Z2GurhdKdQc0OS9gyOhg5QVVeIAzVdvUAmmyCfLKdjgu-UmVQg2kVZdB_ggKtjyD/exec";
+
+  // 對話資料集（取材自 Excel 表格）
+  const dialogueData = [
+    {
+      speaker: "Sandy",
+      zh: "嘿，那是SEVENTEEN的鑰匙圈嗎？妳是CARAT嗎？",
+      en: "Hey, is that a SEVENTEEN key chain? Are you a CARAT?"
+    },
+    {
+      speaker: "Mina",
+      zh: "是的！我是CARAT已經超過三年了。我買這個當作聖誕禮物送給自己。",
+      en: 'Yes! I’ve <span class="drop-zone" data-answer="been"></span> a CARAT for more than three years. I bought this as a <span class="drop-zone" data-answer="Christmas"></span> gift for myself.'
+    },
+    {
+      speaker: "Sandy",
+      zh: "真可愛！妳以前去過他們的演唱會或粉絲見面會嗎？",
+      en: 'That’s so cute! Have you been to their concert or a <span class="drop-zone" data-answer="fan"></span> <span class="drop-zone" data-answer="meeting"></span> before?'
+    },
+    {
+      speaker: "Mina",
+      zh: "還沒。我還沒有機會去，但他們已經出現在很多電視節目上了。他們一直都很可愛又風趣。我真的希望有一天能看到他們的現場表演。妳曾去過他們的演唱會嗎？",
+      en: 'Not <span class="drop-zone" data-answer="yet"></span>. I haven’t had the chance, but they’ve <span class="drop-zone" data-answer="appeared"></span> on many TV <span class="drop-zone" data-answer="programs"></span>. They’ve always been so <span class="drop-zone" data-answer="lovely"></span> and <span class="drop-zone" data-answer="funny"></span>. I really hope to see them live one day. Have you ever been to their concert?'
+    },
+    {
+      speaker: "Sandy",
+      zh: "我沒看過SEVENTEEN的現場表演，但我去年十月在臺北看了i-dle的演唱會。我是Neverland！",
+      en: 'I haven’t <span class="drop-zone" data-answer="seen"></span> SEVENTEEN live, but I watched i-dle’s concert in Taipei last October. I’m a Neverland!'
+    },
+    {
+      speaker: "Mina",
+      zh: "我也一樣。我也是i-dle的粉絲。妳最喜歡的成員是誰？",
+      en: '<span class="drop-zone" data-answer="Same"></span> here. I’m a fan of i-dle too. Who’s your favorite member?'
+    },
+    {
+      speaker: "Sandy",
+      zh: "隊長。她為這支樂團寫過很多首歌。我最喜歡的是《Lion》。",
+      en: 'The leader. She has written many songs for the <span class="drop-zone" data-answer="band"></span>. My favorite is “Lion.”'
+    },
+    {
+      speaker: "Mina",
+      zh: "我對那首非常熟悉。太棒了！妳去過她們的現場演唱會真是太好了。我真的很想去SEVENTEEN的演唱會。",
+      en: 'I know that one very well. It’s <span class="drop-zone" data-answer="amazing"></span>! It’s wonderful that you’ve been to their live concert. I really want to go to a SEVENTEEN concert.'
+    },
+    {
+      speaker: "Sandy",
+      zh: "妳可以存錢買票。我存了好幾個月，而且我父母同意我可以去參加i-dle的演唱會。",
+      en: 'You can save money to get a ticket. I saved for months, and my parents agreed that I could go to i-dle’s <span class="drop-zone" data-answer="concert"></span>.'
+    },
+    {
+      speaker: "Mina",
+      zh: "那我也要開始存錢了！我希望有一天我也能去他們的演唱會。",
+      en: 'Then I’ll <span class="drop-zone" data-answer="start"></span> saving money, too! I hope I can go to their concert someday.'
+    },
+    {
+      speaker: "Sandy",
+      zh: "或者妳可以看他們的直播。",
+      en: 'Or you can watch their live <span class="drop-zone" data-answer="streams"></span>.'
+    },
+    {
+      speaker: "Mina",
+      zh: "我看過他們的直播很多次了！上一次的直播讓我哭了。",
+      en: 'I’ve <span class="drop-zone" data-answer="watched"></span> their live streams many times! The last one made me cry.'
+    },
+    {
+      speaker: "Sandy",
+      zh: "他們對粉絲很好。他們總是盡全力表演並送禮物給粉絲。我希望他們能再來臺灣。如果他們來了，我們一起去吧！",
+      en: 'They <span class="drop-zone" data-answer="treat"></span> fans so well. They always do their best to <span class="drop-zone" data-answer="perform"></span> and give gifts to fans. I hope they come to Taiwan again. If they do, let’s go together!'
+    },
+    {
+      speaker: "Mina",
+      zh: "一言為定！",
+      en: '<span class="drop-zone" data-answer="Deal"></span>!'
+    }
+  ];
+
+  // 答案清單
+  const rawWords = [
+    "been", "Christmas", "fan", "meeting", "yet", "appeared", "programs",
+    "lovely", "funny", "seen", "Same", "band", "amazing", "concert",
+    "start", "streams", "watched", "treat", "perform", "Deal"
+  ];
+
+  let secondsSpent = 0;
+  let timerInterval = null;
+  let selectedWordElement = null;
+  let showZh = true;
+
+  // 初始化
+  window.onload = () => {
+    initTimer();
+    renderDialogue();
+    renderWordBank();
+    setupEvents();
+  };
+
+  function initTimer() {
+    timerInterval = setInterval(() => {
+      secondsSpent++;
+      const mins = String(Math.floor(secondsSpent / 60)).padStart(2, '0');
+      const secs = String(secondsSpent % 60).padStart(2, '0');
+      document.getElementById('timer').innerText = `${mins}:${secs}`;
+    }, 1000);
+  }
+
+  function renderDialogue() {
+    const container = document.getElementById('dialogueContent');
+    container.innerHTML = dialogueData.map((item) => `
+      <div class="line-item">
+        <div><span class="speaker">${item.speaker}:</span>${item.en}</div>
+        <span class="zh-text">${item.zh}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderWordBank() {
+    const wordBank = document.getElementById('wordBank');
+    // 打亂單字順序
+    const shuffled = [...rawWords].sort(() => Math.random() - 0.5);
+    
+    wordBank.innerHTML = shuffled.map((word, index) => `
+      <div class="word-card" draggable="true" id="word-${index}" data-word="${word}">${word}</div>
+    `).join('');
+  }
+
+  function setupEvents() {
+    const wordBank = document.getElementById('wordBank');
+
+    // 事件委派：處理單字卡拖動與點擊選取
+    document.addEventListener('dragstart', (e) => {
+      if (e.target.classList.contains('word-card')) {
+        e.dataTransfer.setData('text/plain', e.target.id);
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('word-card')) {
+        handleWordClick(e.target);
+      } else if (e.target.classList.contains('drop-zone')) {
+        handleZoneClick(e.target);
+      } else if (e.target.id === 'wordBank' || e.target.closest('#wordBank')) {
+        if (selectedWordElement) {
+          wordBank.appendChild(selectedWordElement);
+          clearSelection();
+        }
+      }
+    });
+
+    // Drop Zones 事件
+    document.querySelectorAll('.drop-zone').forEach(zone => {
+      zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('hovered');
+      });
+
+      zone.addEventListener('dragleave', () => zone.classList.remove('hovered'));
+
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('hovered');
+        const id = e.dataTransfer.getData('text/plain');
+        const draggedEl = document.getElementById(id);
+        if (draggedEl) {
+          placeWordInZone(draggedEl, zone);
+        }
+      });
+    });
+
+    // 允許拖回單字庫
+    wordBank.addEventListener('dragover', (e) => e.preventDefault());
+    wordBank.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const id = e.dataTransfer.getData('text/plain');
+      const draggedEl = document.getElementById(id);
+      if (draggedEl) {
+        wordBank.appendChild(draggedEl);
+        clearSelection();
+      }
+    });
+  }
+
+  function handleWordClick(wordEl) {
+    if (selectedWordElement === wordEl) {
+      clearSelection();
+    } else {
+      clearSelection();
+      selectedWordElement = wordEl;
+      wordEl.classList.add('selected');
+    }
+  }
+
+  function handleZoneClick(zone) {
+    if (selectedWordElement) {
+      placeWordInZone(selectedWordElement, zone);
+      clearSelection();
+    } else if (zone.children.length > 0) {
+      // 點擊已有單字的空格，把單字退回單字庫
+      const childWord = zone.children[0];
+      document.getElementById('wordBank').appendChild(childWord);
+    }
+  }
+
+  function placeWordInZone(wordEl, zone) {
+    const wordBank = document.getElementById('wordBank');
+    if (zone.children.length > 0) {
+      wordBank.appendChild(zone.children[0]);
+    }
+    zone.appendChild(wordEl);
+  }
+
+  function clearSelection() {
+    if (selectedWordElement) {
+      selectedWordElement.classList.remove('selected');
+      selectedWordElement = null;
+    }
+  }
+
+  function toggleTranslation() {
+    showZh = !showZh;
+    document.querySelectorAll('.zh-text').forEach(el => {
+      el.style.display = showZh ? 'block' : 'none';
+    });
+  }
+
+// 提交與後端資料傳送（包含顯示錯題答案）
+  async function submitQuiz() {
+    const className = document.getElementById('className').value.trim();
+    const seatNumber = document.getElementById('seatNumber').value.trim();
+    const name = document.getElementById('studentName').value.trim();
+
+    if (!className || !seatNumber || !name) {
+      alert("請完整輸入班級、座號與姓名！");
+      return;
+    }
+
+    clearInterval(timerInterval);
+    const mins = Math.floor(secondsSpent / 60);
+    const secs = secondsSpent % 60;
+    const timeSpentStr = `${mins}分${secs}秒`;
+
+    const dropZones = document.querySelectorAll('.drop-zone');
+    let score = 0;
+    const totalScore = dropZones.length;
+
+    // 清除舊有的錯題提示（若有）
+    document.querySelectorAll('.correct-hint').forEach(el => el.remove());
+
+    dropZones.forEach(zone => {
+      zone.classList.remove('correct', 'incorrect');
+      const child = zone.querySelector('.word-card');
+      const correctAnswer = zone.getAttribute('data-answer').trim();
+
+      if (child) {
+        const userWord = child.getAttribute('data-word').trim();
+        if (userWord.toLowerCase() === correctAnswer.toLowerCase()) {
+          zone.classList.add('correct');
+          score++;
+        } else {
+          zone.classList.add('incorrect');
+          showCorrectHint(zone, correctAnswer); // 顯示正確答案
+        }
+      } else {
+        // 未填寫
+        zone.classList.add('incorrect');
+        showCorrectHint(zone, correctAnswer); // 顯示正確答案
+      }
+    });
+
+    document.getElementById('submitBtn').disabled = true;
+    const statusMsg = document.getElementById('statusMessage');
+    statusMsg.innerText = "成績計算中，傳送至試算表中...";
+
+    const payload = {
+      className: className,
+      seatNumber: seatNumber,
+      name: name,
+      timeSpent: timeSpentStr,
+      score: score,
+      totalScore: totalScore
+    };
+
+    try {
+      await fetch(GAS_WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      statusMsg.style.color = "#2ecc71";
+      statusMsg.innerText = `🎉 測驗完成！得分：${score} / ${totalScore} 分（費時：${timeSpentStr}），成績已成功登記！錯題正解已顯示於文章中。`;
+    } catch (err) {
+      statusMsg.style.color = "#e74c3c";
+      statusMsg.innerText = `得分：${score} / ${totalScore} 分，但傳送成績至試算表失敗。`;
+      console.error(err);
+    }
+  }
+
+  // 輔助函式：在錯題空格後方動態插入正確答案提示
+  function showCorrectHint(zone, correctAnswer) {
+    const hintSpan = document.createElement('span');
+    hintSpan.className = 'correct-hint';
+    hintSpan.innerText = `(正解: ${correctAnswer})`;
+    zone.after(hintSpan); // 插入在 drop-zone 元素的正後方
+  }
+</script>
+
+</body>
+</html>
