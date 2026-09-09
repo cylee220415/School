@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B5L1 Reading Interactive Quiz - Shuhua's Story</title>
+  <style>
+    :root {
+      --primary: #4a90e2;
+      --secondary: #f39c12;
+      --success: #2ecc71;
+      --danger: #e74c3c;
+      --bg: #f5f7fa;
+      --card-bg: #ffffff;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    h1, h2, h3 {
+      color: #2c3e50;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 8px;
+    }
+
+    .user-info-card {
+      background: #eef6ff;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .user-info-card input {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    #timer-display {
+      margin-left: auto;
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--danger);
+      background: #fff;
+      padding: 5px 15px;
+      border-radius: 20px;
+      border: 2px solid var(--danger);
+    }
+
+    .section-box {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+    }
+
+    .strategy-card {
+      background: #fdf6ec;
+      border-left: 5px solid var(--secondary);
+      padding: 12px 18px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+    }
+
+    /* Drag and Drop Styles */
+    .drag-bank {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      background: #eef2f5;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      min-height: 50px;
+    }
+
+    .drag-item {
+      background: var(--primary);
+      color: white;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: grab;
+      user-select: none;
+      font-size: 14px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+      transition: transform 0.1s;
+    }
+
+    .drag-item:active {
+      cursor: grabbing;
+      transform: scale(1.05);
+    }
+
+    .drop-target {
+      display: inline-block;
+      min-width: 120px;
+      min-height: 32px;
+      border: 2px dashed #bbb;
+      border-radius: 6px;
+      background: #fff;
+      vertical-align: middle;
+      margin: 3px;
+      text-align: center;
+      line-height: 32px;
+      padding: 0 8px;
+    }
+
+    .drop-target.hover {
+      background: #e3f2fd;
+      border-color: var(--primary);
+    }
+
+    .drop-target .drag-item {
+      margin: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Paragraph Sequence List */
+    .sequence-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .seq-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background: #fafafa;
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+
+    /* Mindmap Table */
+    .mindmap-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .mindmap-table th, .mindmap-table td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .mindmap-table th {
+      background: #f0f4f8;
+    }
+
+    .btn-submit {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      background: var(--success);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-submit:hover {
+      background: #27ae60;
+    }
+
+    .answer-feedback {
+      margin-top: 5px;
+      font-size: 13px;
+      font-weight: bold;
+      display: none;
+    }
+
+    .correct { color: var(--success); }
+    .incorrect { color: var(--danger); }
+
+    .result-board {
+      display: none;
+      background: #e8f8f5;
+      border: 2px solid var(--success);
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 學生資訊與計時器 -->
+  <div class="user-info-card">
+    <label>班級：<input type="text" id="student-class" placeholder="例：901"></label>
+    <label>座號：<input type="number" id="student-number" placeholder="例：05"></label>
+    <label>姓名：<input type="text" id="student-name" placeholder="例：王小明"></label>
+    <div id="timer-display">時間: 00:00</div>
+  </div>
+
+  <div class="result-board" id="result-board">
+    <h2>測驗完成！</h2>
+    <p id="score-text" style="font-size: 20px; font-weight: bold;"></p>
+    <p id="time-text"></p>
+  </div>
+
+  <!-- Part 1: 閱讀策略教學概述 -->
+  <div class="section-box">
+    <h2>Part 1) 閱讀策略教學概述 (Reading Strategy: Sequencing)</h2>
+    <div class="strategy-card">
+      <strong>💡 策略指引 (Organizing: Sequencing):</strong><br>
+      在閱讀長篇文章時，**「按時間/事件順序排序 (Sequencing)」** 能幫助我們掌握故事或傳記發展脈絡。請依據課文時間線（成為練習生 ➔ 每天練習 ➔ 團體出道 ➔ 獲得全球粉絲 ➔ 迎接新挑戰）來理解文章架構。
+    </div>
+  </div>
+
+  <!-- Part 2: 每段大意 Drag n' Drop 排序 -->
+  <div class="section-box">
+    <h2>Part 2) 課文事件發生的先後順序 (Sequence of Events)</h2>
+    <p>請將上方文字塊拖拽至對應的 1～5 步驟順序框中：</p>
+    
+    <div class="drag-bank" id="bank-part2">
+      <div class="drag-item" draggable="true" id="p2-A" data-val="A">A. Shuhua keeps taking on new challenges.</div>
+      <div class="drag-item" draggable="true" id="p2-B" data-val="B">B. Shuhua practiced singing and dancing every day.</div>
+      <div class="drag-item" draggable="true" id="p2-C" data-val="C">C. In order to be a trainee, Shuhua moved to Korea.</div>
+      <div class="drag-item" draggable="true" id="p2-D" data-val="D">D. Shuhua became a member of the girl group i-dle.</div>
+      <div class="drag-item" draggable="true" id="p2-E" data-val="E">E. Shuhua has won fans from all over the world.</div>
+    </div>
+
+    <div class="sequence-list">
+      <div class="seq-item"><strong>Step 1:</strong> <div class="drop-target" data-ans="C"></div> <span class="answer-feedback"></span></div>
+      <div class="seq-item"><strong>Step 2:</strong> <div class="drop-target" data-ans="B"></div> <span class="answer-feedback"></span></div>
+      <div class="seq-item"><strong>Step 3:</strong> <div class="drop-target" data-ans="D"></div> <span class="answer-feedback"></span></div>
+      <div class="seq-item"><strong>Step 4:</strong> <div class="drop-target" data-ans="E"></div> <span class="answer-feedback"></span></div>
+      <div class="seq-item"><strong>Step 5:</strong> <div class="drop-target" data-ans="A"></div> <span class="answer-feedback"></span></div>
+    </div>
+  </div>
+
+  <!-- Part 3: 課文 Mindmap 結構匹配 Drag n' Drop -->
+  <div class="section-box">
+    <h2>Part 3) 課文心智圖結構配對 (Mindmap Matching)</h2>
+    <p>請將下方「主題大意」拖拽至對應的心智圖分支分類中：</p>
+
+    <div class="drag-bank" id="bank-part3">
+      <div class="drag-item" draggable="true" id="p3-1" data-val="About Shuhua">About Shuhua</div>
+      <div class="drag-item" draggable="true" id="p3-2" data-val="Training Time in South Korea">Training Time in South Korea</div>
+      <div class="drag-item" draggable="true" id="p3-3" data-val="After debut">After debut</div>
+      <div class="drag-item" draggable="true" id="p3-4" data-val="Facing Challenges">Facing Challenges</div>
+      <div class="drag-item" draggable="true" id="p3-5" data-val="Keys to Success">Keys to Success</div>
+    </div>
+
+    <table class="mindmap-table">
+      <thead>
+        <tr>
+          <th>主題類別 (Drag Here)</th>
+          <th>內容細節摘要 (Content)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="drop-target" data-ans="About Shuhua"></div><span class="answer-feedback"></span></td>
+          <td>Moved to South Korea to be a trainee to become a superstar.</td>
+        </tr>
+        <tr>
+          <td><div class="drop-target" data-ans="Training Time in South Korea"></div><span class="answer-feedback"></span></td>
+          <td>Practiced singing/dancing every day and became a member of i-dle.</td>
+        </tr>
+        <tr>
+          <td><div class="drop-target" data-ans="After debut"></div><span class="answer-feedback"></span></td>
+          <td>Performed in many shows and won fans around the world.</td>
+        </tr>
+        <tr>
+          <td><div class="drop-target" data-ans="Facing Challenges"></div><span class="answer-feedback"></span></td>
+          <td>Improving Korean, late practice, and mean comments on the Internet.</td>
+        </tr>
+        <tr>
+          <td><div class="drop-target" data-ans="Keys to Success"></div><span class="answer-feedback"></span></td>
+          <td>Never loses hope, keeps working hard, and stays brave.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Part 4: 閱讀填空 Drag n' Drop -->
+  <div class="section-box">
+    <h2>Part 4) 閱讀心智圖填空 (Mindmap Cloze Test)</h2>
+    <p>請依據課文將正確單字拖曳至句子填空處：</p>
+
+    <div class="drag-bank" id="bank-part4">
+      <div class="drag-item" draggable="true" id="p4-superstar" data-val="superstar">superstar</div>
+      <div class="drag-item" draggable="true" id="p4-singing" data-val="singing">singing</div>
+      <div class="drag-item" draggable="true" id="p4-lonely" data-val="lonely">lonely</div>
+      <div class="drag-item" draggable="true" id="p4-fans" data-val="fans">fans</div>
+      <div class="drag-item" draggable="true" id="p4-improve" data-val="improve">improve</div>
+      <div class="drag-item" draggable="true" id="p4-stronger" data-val="stronger">stronger</div>
+      <div class="drag-item" draggable="true" id="p4-hope" data-val="hope">hope</div>
+    </div>
+
+    <div style="line-height: 2.2;">
+      1. She is a girl from Taiwan with a big dream: to become a <div class="drop-target" data-ans="superstar"></div>. <span class="answer-feedback"></span><br>
+      2. She practiced <div class="drop-target" data-ans="singing"></div> and dancing every day. <span class="answer-feedback"></span><br>
+      3. She often felt <div class="drop-target" data-ans="lonely"></div>, yet she never gave up. <span class="answer-feedback"></span><br>
+      4. Since 2018, she has won <div class="drop-target" data-ans="fans"></div> from all over the world. <span class="answer-feedback"></span><br>
+      5. She has to <div class="drop-target" data-ans="improve"></div> her Korean and perform better on stage. <span class="answer-feedback"></span><br>
+      6. She keeps telling herself, "Every challenge will make me <div class="drop-target" data-ans="stronger"></div>." <span class="answer-feedback"></span><br>
+      7. Shuhua's life has ups and downs, but she never loses <div class="drop-target" data-ans="hope"></div>. <span class="answer-feedback"></span>
+    </div>
+  </div>
+
+  <button class="btn-submit" onclick="submitQuiz()">提交測驗 (Submit)</button>
+</div>
+
+<script>
+  // 計時器邏輯
+  let seconds = 0;
+  let timerInterval = setInterval(() => {
+    seconds++;
+    let mins = Math.floor(seconds / 60);
+    let secs = seconds % 60;
+    document.getElementById('timer-display').innerText = 
+      `時間: ${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  }, 1000);
+
+  // Drag and Drop 功能實作
+  let draggedItem = null;
+
+  document.querySelectorAll('.drag-item').forEach(item => {
+    item.addEventListener('dragstart', function(e) {
+      draggedItem = this;
+      setTimeout(() => this.style.display = 'none', 0);
+    });
+
+    item.addEventListener('dragend', function() {
+      setTimeout(() => {
+        draggedItem.style.display = 'inline-block';
+        draggedItem = null;
+      }, 0);
+    });
+  });
+
+  document.querySelectorAll('.drop-target, .drag-bank').forEach(target => {
+    target.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.classList.add('hover');
+    });
+
+    target.addEventListener('dragleave', function() {
+      this.classList.remove('hover');
+    });
+
+    target.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('hover');
+      if (draggedItem) {
+        // 如果放置點已經有元素，將原本的放回對應的 bank
+        if (this.classList.contains('drop-target') && this.children.length > 0) {
+          let parentBank = draggedItem.parentElement;
+          parentBank.appendChild(this.children[0]);
+        }
+        this.appendChild(draggedItem);
+      }
+    });
+  });
+
+  // 測驗提交與批改
+  function submitQuiz() {
+    const sClass = document.getElementById('student-class').value;
+    const sNo = document.getElementById('student-number').value;
+    const sName = document.getElementById('student-name').value;
+
+    if (!sClass || !sNo || !sName) {
+      alert('請先完整輸入【班級】、【座號】與【姓名】再提交！');
+      return;
+    }
+
+    clearInterval(timerInterval); // 停止計時
+
+    let totalQuestions = 0;
+    let correctQuestions = 0;
+
+    // 檢查答案
+    document.querySelectorAll('.drop-target').forEach(target => {
+      totalQuestions++;
+      const expected = target.getAttribute('data-ans');
+      const child = target.querySelector('.drag-item');
+      const feedback = target.parentElement.querySelector('.answer-feedback') || target.nextElementSibling;
+
+      if (child && child.getAttribute('data-val') === expected) {
+        correctQuestions++;
+        target.style.borderColor = 'var(--success)';
+        if (feedback) {
+          feedback.innerText = '✓ 正確';
+          feedback.className = 'answer-feedback correct';
+          feedback.style.display = 'inline';
+        }
+      } else {
+        target.style.borderColor = 'var(--danger)';
+        if (feedback) {
+          feedback.innerText = `✗ 錯誤 (正確解答: ${expected})`;
+          feedback.className = 'answer-feedback incorrect';
+          feedback.style.display = 'inline';
+        }
+      }
+    });
+
+    // 顯示成果
+    const score = Math.round((correctQuestions / totalQuestions) * 100);
+    const resultBoard = document.getElementById('result-board');
+    document.getElementById('score-text').innerText = `${sClass}班 ${sNo}號 ${sName} - 得分：${score} 分 (${correctQuestions}/${totalQuestions})`;
+    document.getElementById('time-text').innerText = `總共耗時：${document.getElementById('timer-display').innerText.replace('時間: ', '')}`;
+    resultBoard.style.display = 'block';
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>
