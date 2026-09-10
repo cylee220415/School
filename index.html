@@ -100,7 +100,6 @@
             transition: all 0.15s ease;
         }
 
-        /* 點選選取狀態（針對平板與手機操作優化） */
         .drag-item.selected {
             outline: 3px solid #f59e0b;
             background-color: #1d4ed8;
@@ -298,13 +297,18 @@
     let secondsElapsed = 0;
     let timerInterval = null;
     let draggedItem = null;
-    let selectedItem = null; // 記錄點選模式下當前選取的單字卡
+    let selectedItem = null;
     let isSubmitted = false;
 
     document.addEventListener('DOMContentLoaded', () => {
+        // 1. 隨機打亂單字庫順序
+        shuffleOptionBank();
+
+        // 2. 會考倒數天數
         const days = Math.ceil((CAPAG_DATE - new Date()) / (1000 * 3600 * 24));
         document.getElementById('capagCountdown').textContent = days > 0 ? days : 0;
 
+        // 3. 啟動計時器
         timerInterval = setInterval(() => {
             secondsElapsed++;
             const m = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
@@ -312,17 +316,31 @@
             document.getElementById('quizTimer').textContent = `${m}:${s}`;
         }, 1000);
 
+        // 4. 初始化拖拉與點選互動
         initInteraction();
     });
+
+    // 將單字庫選項隨機洗牌
+    function shuffleOptionBank() {
+        const optionBank = document.getElementById('optionBank');
+        const items = Array.from(optionBank.children);
+        
+        // Fisher-Yates 洗牌演算法
+        for (let i = items.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [items[i], items[j]] = [items[j], items[i]];
+        }
+
+        // 重新依隨機順序放入 DOM
+        items.forEach(item => optionBank.appendChild(item));
+    }
 
     function initInteraction() {
         const dragItems = document.querySelectorAll('.drag-item');
         const dropZones = document.querySelectorAll('.drop-zone');
         const optionBank = document.getElementById('optionBank');
 
-        // 單字卡 事件處理（支援拖拉 + 點選）
         dragItems.forEach(item => {
-            // 原生拖拉
             item.addEventListener('dragstart', function() {
                 if (isSubmitted) return;
                 draggedItem = this;
@@ -333,18 +351,15 @@
                 this.classList.remove('dragging');
             });
 
-            // 觸控 / 點擊模式
             item.addEventListener('click', function(e) {
                 if (isSubmitted) return;
                 e.stopPropagation();
 
-                // 若單字已在空格內，且當前未點選其他單字，再次點擊會直接放回單字庫
                 if (this.parentElement.classList.contains('drop-zone') && !selectedItem) {
                     optionBank.appendChild(this);
                     return;
                 }
 
-                // 切換選取狀態
                 if (selectedItem === this) {
                     this.classList.remove('selected');
                     selectedItem = null;
@@ -356,7 +371,6 @@
             });
         });
 
-        // 空格 事件處理（支援拖拉 + 點選）
         dropZones.forEach(zone => {
             zone.addEventListener('dragover', e => e.preventDefault());
             
@@ -370,12 +384,10 @@
                 this.appendChild(draggedItem);
             });
 
-            // 點擊空格填入已選取的單字
             zone.addEventListener('click', function() {
                 if (isSubmitted) return;
 
                 if (selectedItem) {
-                    // 若目標空格已存有單字，先放回單字庫
                     if (this.children.length > 0) {
                         optionBank.appendChild(this.children[0]);
                     }
@@ -386,7 +398,6 @@
             });
         });
 
-        // 點擊單字庫區域可取消選取或將單字退回
         optionBank.addEventListener('click', function(e) {
             if (isSubmitted) return;
             if (selectedItem && e.target === optionBank) {
